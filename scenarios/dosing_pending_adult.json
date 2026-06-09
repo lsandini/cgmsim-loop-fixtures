@@ -1,0 +1,20 @@
+{
+  "kind": "dosing_recommendation",
+  "_comment": "LoopKit testStartLowEndHighWithPendingBolusExponentialModel: class model peak 75 (4500s) delay 0, suspendThreshold 55, pendingInsulin 1. Swift asserts 0.9 U (raw correction ~1.9 minus pending 1.0).",
+  "glucose": [
+    {"date": "2015-07-19T18:00:00Z", "value": 60},
+    {"date": "2015-07-19T19:00:00Z", "value": 80},
+    {"date": "2015-07-19T20:00:00Z", "value": 120},
+    {"date": "2015-07-19T21:00:00Z", "value": 160},
+    {"date": "2015-07-19T22:00:00Z", "value": 200}
+  ],
+  "targetLow_mgdL": 90,
+  "targetHigh_mgdL": 120,
+  "suspendThreshold_mgdL": 55,
+  "insulinSensitivity_mgdLperU": 60,
+  "peakActivityMinutes": 75,
+  "actionDurationHours": 6,
+  "delayMinutes": 0,
+  "pendingInsulin": 1,
+  "maxBolus": 10
+}

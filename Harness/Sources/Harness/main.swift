@@ -126,6 +126,7 @@ func runDosingRecommendation(_ data: Data) {
         let insulinSensitivity_mgdLperU: Double
         let peakActivityMinutes: Double
         let actionDurationHours: Double
+        let delayMinutes: Double?   // optional; LoopKit ExponentialInsulinModel default delay is 10 min
         let pendingInsulin: Double
         let maxBolus: Double
     }
@@ -153,10 +154,13 @@ func runDosingRecommendation(_ data: Data) {
         dailyItems: [RepeatingScheduleValue(startTime: 0, value: s.insulinSensitivity_mgdLperU)]
     ) else { fail("cannot build insulin sensitivity schedule") }
 
-    // Direct ExponentialInsulinModel (matches testDoseWithChildCurve, delay defaults to 600s).
+    // Direct ExponentialInsulinModel. delayMinutes is optional: omitted ⇒ LoopKit's
+    // default 600 s (10 min), used by testDose{Fiasp,Child}Curve; the class-level
+    // exponentialInsulinModel (peak 75) explicitly uses delay 0.
     let model = ExponentialInsulinModel(
         actionDuration: s.actionDurationHours * 3600.0,
-        peakActivityTime: s.peakActivityMinutes * 60.0
+        peakActivityTime: s.peakActivityMinutes * 60.0,
+        delay: (s.delayMinutes ?? 10.0) * 60.0
     )
     let suspend = HKQuantity(unit: mgdLUnit, doubleValue: s.suspendThreshold_mgdL)
 
