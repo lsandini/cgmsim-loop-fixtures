@@ -1,0 +1,19 @@
+{
+  "kind": "dosing_recommendation",
+  "_comment": "Replicates LoopKit DoseMathTests.testDoseWithChildCurve (peak 65). Swift asserts 1.96; CGMSIM JS computes a raw 1.904. This fixture records LoopKit's actual raw recommendedManualBolus (no volume rounder) to settle §3.9.",
+  "glucose": [
+    {"date": "2015-07-19T18:00:00Z", "value": 140},
+    {"date": "2015-07-19T19:00:00Z", "value": 150},
+    {"date": "2015-07-19T20:00:00Z", "value": 160},
+    {"date": "2015-07-19T21:00:00Z", "value": 170},
+    {"date": "2015-07-19T22:00:00Z", "value": 180}
+  ],
+  "targetLow_mgdL": 90,
+  "targetHigh_mgdL": 120,
+  "suspendThreshold_mgdL": 55,
+  "insulinSensitivity_mgdLperU": 60,
+  "peakActivityMinutes": 65,
+  "actionDurationHours": 6,
+  "pendingInsulin": 0,
+  "maxBolus": 10
+}
