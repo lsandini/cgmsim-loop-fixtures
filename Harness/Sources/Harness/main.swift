@@ -91,7 +91,7 @@ let dose = DoseEntry(
 let provider = PresetInsulinModelProvider(defaultRapidActingModel: nil)
 let model = provider.model(for: type)
 
-let isfUnit = HKUnit.milligramsPerDeciliter.unitDivided(by: HKUnit.internationalUnit())
+let isfUnit = HKUnit(from: "mg/dL").unitDivided(by: HKUnit.internationalUnit())
 guard let sensitivity = InsulinSensitivitySchedule(
     unit: isfUnit,
     dailyItems: [RepeatingScheduleValue(startTime: 0, value: scenario.insulinSensitivity_mgdLperU)]
@@ -111,7 +111,7 @@ let effects = [dose].glucoseEffects(
 
 // MARK: - Emit fixture JSON
 
-let mgdL = HKUnit.milligramsPerDeciliter
+let mgdL = HKUnit(from: "mg/dL")
 let points = effects.map { effect in
     FixturePoint(
         minutesFromBolus: Int((effect.startDate.timeIntervalSince(anchor) / 60.0).rounded()),
