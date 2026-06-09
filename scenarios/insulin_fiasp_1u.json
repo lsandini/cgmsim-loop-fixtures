@@ -1,0 +1,9 @@
+{
+  "kind": "insulin_effect",
+  "anchor": "2025-01-01T00:00:00Z",
+  "doseUnits": 1.0,
+  "insulinModel": "fiasp",
+  "insulinSensitivity_mgdLperU": 50.0,
+  "durationHours": 6,
+  "deltaMinutes": 5
+}

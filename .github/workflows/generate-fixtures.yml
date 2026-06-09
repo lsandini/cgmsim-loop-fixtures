@@ -1,0 +1,85 @@
+name: generate-fixtures
+
+# Builds the Swift harness against the real LoopKit submodule on a macOS runner,
+# runs every scenario in scenarios/, and commits the emitted fixtures back so
+# CGMSIM's JS test suite can assert byte-for-byte fidelity against them.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Harness/**'
+      - 'scenarios/**'
+      - '.github/workflows/generate-fixtures.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: macos-15
+    steps:
+      - name: Checkout (no submodules — we init only what we need below)
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      # The Harness builds only the LoopKit package (../LoopWorkspace/LoopKit),
+      # whose `LoopKit` target has no submodule dependencies (SwiftCharts is a
+      # remote package, resolved during `swift build`). LoopKit also contains all
+      # the math we mirror (InsulinKit / CarbKit / LoopMath / DoseMath). So we
+      # init ONLY LoopWorkspace → LoopKit and skip the ~19 unused device/service
+      # submodules (CGMBLEKit, Omnipod, Minimed, Libre, Dexcom, Nightscout*, …),
+      # which saves substantial CI clone time and bandwidth.
+      - name: Init only LoopWorkspace + LoopKit
+        run: |
+          set -euo pipefail
+          git submodule update --init LoopWorkspace
+          git -C LoopWorkspace submodule update --init LoopKit
+          echo "--- initialized submodules under LoopWorkspace ---"
+          git -C LoopWorkspace submodule status | grep -v '^-' || true
+          test -f LoopWorkspace/LoopKit/Package.swift || { echo "::error::LoopKit submodule not checked out"; exit 1; }
+
+      - name: Patch LoopKit manifest for macOS (build-time only, never committed)
+        run: |
+          set -euo pipefail
+          MANIFEST=LoopWorkspace/LoopKit/Package.swift
+          # BSD sed (macOS): -i '' for in-place. Add .macOS alongside the iOS platform.
+          sed -i '' 's/platforms: \[.iOS("15.0")\]/platforms: [.iOS("15.0"), .macOS("13.0")]/' "$MANIFEST"
+          echo "--- patched platforms line ---"
+          grep -n 'platforms:' "$MANIFEST"
+          if ! grep -q '.macOS("13.0")' "$MANIFEST"; then
+            echo "::error::manifest patch did not apply — LoopKit Package.swift platform line may have changed in this submodule version"
+            exit 1
+          fi
+
+      - name: Build harness (release)
+        run: swift build -c release --package-path Harness
+
+      - name: Generate fixtures
+        run: |
+          set -euo pipefail
+          mkdir -p fixtures
+          BIN=Harness/.build/release/Harness
+          shopt -s nullglob
+          for scenario in scenarios/*.json; do
+            name=$(basename "$scenario")
+            echo "Generating fixtures/$name from $scenario"
+            "$BIN" "$scenario" > "fixtures/$name"
+          done
+          echo "--- generated fixtures ---"
+          ls -l fixtures/
+
+      - name: Commit fixtures (no-op if unchanged)
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add fixtures/
+          if git diff --cached --quiet; then
+            echo "No fixture changes."
+          else
+            git commit -m "ci: regenerate Loop reference fixtures from LoopKit ${{ github.sha }}"
+            git push
+          fi
