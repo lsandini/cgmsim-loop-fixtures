@@ -1,0 +1,11 @@
+{
+  "kind": "carb_effect",
+  "_comment": "Static CarbMath.glucoseEffects for a single 40 g carb entry, 3 h piecewise-linear absorption, CR 10 g/U, ISF 50 mg/dL → CSF 5 mg/dL/g, total rise 200 mg/dL. Analog of insulin_fiasp_1u for the carb path (carb-effect.js calculateCarbEffect).",
+  "anchor": "2025-01-01T00:00:00Z",
+  "carbGrams": 40,
+  "absorptionMinutes": 180,
+  "carbRatio_gPerU": 10,
+  "insulinSensitivity_mgdLperU": 50,
+  "delayMinutes": 10,
+  "deltaMinutes": 5
+}

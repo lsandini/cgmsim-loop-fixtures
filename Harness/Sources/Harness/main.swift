@@ -65,6 +65,13 @@ struct SimpleGlucose: GlucoseValue {
     let quantity: HKQuantity
 }
 
+/// Minimal public CarbEntry conformer (CarbEntry = SampleValue + absorptionTime).
+struct SimpleCarbEntry: CarbEntry {
+    let startDate: Date
+    let quantity: HKQuantity
+    let absorptionTime: TimeInterval?
+}
+
 // MARK: - kind: insulin_effect
 
 func runInsulinEffect(_ data: Data) {
@@ -179,6 +186,68 @@ func runDosingRecommendation(_ data: Data) {
     emit(Fixture(recommendedBolusUnits: dose.amount))
 }
 
+// MARK: - kind: carb_effect
+
+func runCarbEffect(_ data: Data) {
+    struct Scenario: Decodable {
+        let anchor: String
+        let carbGrams: Double
+        let absorptionMinutes: Double
+        let carbRatio_gPerU: Double
+        let insulinSensitivity_mgdLperU: Double
+        let delayMinutes: Double?   // optional; LoopKit CarbMath.glucoseEffects default delay is 10 min
+        let deltaMinutes: Double
+    }
+    struct FixturePoint: Encodable {
+        let minutesFromCarb: Int
+        let glucoseEffect: Double   // cumulative mg/dL (positive = glucose rise from carb absorption)
+    }
+
+    guard let s = try? JSONDecoder().decode(Scenario.self, from: data) else {
+        fail("cannot decode carb_effect scenario")
+    }
+    guard let anchor = isoUTC.date(from: s.anchor) else { fail("cannot parse anchor: \(s.anchor)") }
+
+    let gram = HKUnit.gram()
+    let absorptionTime = s.absorptionMinutes * 60.0
+    let entry = SimpleCarbEntry(
+        startDate: anchor,
+        quantity: HKQuantity(unit: gram, doubleValue: s.carbGrams),
+        absorptionTime: absorptionTime
+    )
+
+    // CarbRatioSchedule is read in grams (CSF = ISF[mg/dL] / CR[g]); the "per unit"
+    // is implicit, mirroring how InsulinSensitivitySchedule stores plain mg/dL.
+    guard let carbRatios = CarbRatioSchedule(
+        unit: gram,
+        dailyItems: [RepeatingScheduleValue(startTime: 0, value: s.carbRatio_gPerU)]
+    ) else { fail("cannot build carb ratio schedule") }
+
+    guard let sensitivities = InsulinSensitivitySchedule(
+        unit: mgdLUnit,
+        dailyItems: [RepeatingScheduleValue(startTime: 0, value: s.insulinSensitivity_mgdLperU)]
+    ) else { fail("cannot build insulin sensitivity schedule") }
+
+    // PiecewiseLinearAbsorption is LoopKit's default and the model our JS port uses.
+    // (LinearAbsorption is internal to LoopKit and not reachable from here.)
+    let effects = [entry].glucoseEffects(
+        carbRatios: carbRatios,
+        insulinSensitivities: sensitivities,
+        defaultAbsorptionTime: absorptionTime,
+        absorptionModel: PiecewiseLinearAbsorption(),
+        delay: (s.delayMinutes ?? 10.0) * 60.0,
+        delta: s.deltaMinutes * 60.0
+    )
+
+    let points = effects.map { effect in
+        FixturePoint(
+            minutesFromCarb: Int((effect.startDate.timeIntervalSince(anchor) / 60.0).rounded()),
+            glucoseEffect: effect.quantity.doubleValue(for: mgdLUnit)
+        )
+    }
+    emit(points)
+}
+
 // MARK: - Dispatch
 
 struct KindOnly: Decodable { let kind: String }
@@ -195,5 +264,6 @@ guard let kind = (try? JSONDecoder().decode(KindOnly.self, from: data))?.kind el
 switch kind {
 case "insulin_effect":        runInsulinEffect(data)
 case "dosing_recommendation": runDosingRecommendation(data)
+case "carb_effect":           runCarbEffect(data)
 default:                      fail("unknown scenario kind: \(kind)")
 }
