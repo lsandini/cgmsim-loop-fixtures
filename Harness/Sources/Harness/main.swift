@@ -91,7 +91,15 @@ let dose = DoseEntry(
 let provider = PresetInsulinModelProvider(defaultRapidActingModel: nil)
 let model = provider.model(for: type)
 
-let isfUnit = HKUnit(from: "mg/dL").unitDivided(by: HKUnit.internationalUnit())
+// mg/dL, constructed exactly as LoopKit's (internal) HKUnit.milligramsPerDeciliter
+// = gramUnit(.milli) / literUnit(.deci), so doubleValue(for:) conversions are identities.
+let mgdLUnit = HKUnit.gramUnit(with: .milli).unitDivided(by: HKUnit.literUnit(with: .deci))
+
+// LoopKit's InsulinSensitivitySchedule is stored in mg/dL — the "per unit of insulin"
+// is implicit. glucoseEffects() reads it via `.doubleValue(for: HKUnit.milligramsPerDeciliter)`,
+// so the schedule unit must be plain mg/dL (NOT mg/dL ÷ IU, which threw
+// "incompatible units: mg/dL·IU, mg/dL"). Matches the real LoopKit DoseMath tests.
+let isfUnit = mgdLUnit
 guard let sensitivity = InsulinSensitivitySchedule(
     unit: isfUnit,
     dailyItems: [RepeatingScheduleValue(startTime: 0, value: scenario.insulinSensitivity_mgdLperU)]
@@ -111,11 +119,10 @@ let effects = [dose].glucoseEffects(
 
 // MARK: - Emit fixture JSON
 
-let mgdL = HKUnit(from: "mg/dL")
 let points = effects.map { effect in
     FixturePoint(
         minutesFromBolus: Int((effect.startDate.timeIntervalSince(anchor) / 60.0).rounded()),
-        glucoseEffect: effect.quantity.doubleValue(for: mgdL)
+        glucoseEffect: effect.quantity.doubleValue(for: mgdLUnit)
     )
 }
 
