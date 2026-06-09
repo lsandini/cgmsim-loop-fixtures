@@ -1,0 +1,302 @@
+[
+  {
+    "glucoseEffect" : 0,
+    "minutesFromBolus" : 0
+  },
+  {
+    "glucoseEffect" : 0,
+    "minutesFromBolus" : 5
+  },
+  {
+    "glucoseEffect" : 0,
+    "minutesFromBolus" : 10
+  },
+  {
+    "glucoseEffect" : -0.20657070341943418,
+    "minutesFromBolus" : 15
+  },
+  {
+    "glucoseEffect" : -0.7793925206710461,
+    "minutesFromBolus" : 20
+  },
+  {
+    "glucoseEffect" : -1.6546970089011959,
+    "minutesFromBolus" : 25
+  },
+  {
+    "glucoseEffect" : -2.7767108630906536,
+    "minutesFromBolus" : 30
+  },
+  {
+    "glucoseEffect" : -4.096784406424369,
+    "minutesFromBolus" : 35
+  },
+  {
+    "glucoseEffect" : -5.572607758023879,
+    "minutesFromBolus" : 40
+  },
+  {
+    "glucoseEffect" : -7.167506311413108,
+    "minutesFromBolus" : 45
+  },
+  {
+    "glucoseEffect" : -8.849807925858128,
+    "minutesFromBolus" : 50
+  },
+  {
+    "glucoseEffect" : -10.592274932841123,
+    "minutesFromBolus" : 55
+  },
+  {
+    "glucoseEffect" : -12.37159469739103,
+    "minutesFromBolus" : 60
+  },
+  {
+    "glucoseEffect" : -14.16792305428105,
+    "minutesFromBolus" : 65
+  },
+  {
+    "glucoseEffect" : -15.964475467224897,
+    "minutesFromBolus" : 70
+  },
+  {
+    "glucoseEffect" : -17.747161239738563,
+    "minutesFromBolus" : 75
+  },
+  {
+    "glucoseEffect" : -19.50425654346843,
+    "minutesFromBolus" : 80
+  },
+  {
+    "glucoseEffect" : -21.22611242734199,
+    "minutesFromBolus" : 85
+  },
+  {
+    "glucoseEffect" : -22.904894332369324,
+    "minutesFromBolus" : 90
+  },
+  {
+    "glucoseEffect" : -24.53434996550178,
+    "minutesFromBolus" : 95
+  },
+  {
+    "glucoseEffect" : -26.109602684555348,
+    "minutesFromBolus" : 100
+  },
+  {
+    "glucoseEffect" : -27.626967817490527,
+    "minutesFromBolus" : 105
+  },
+  {
+    "glucoseEffect" : -29.08378958573921,
+    "minutesFromBolus" : 110
+  },
+  {
+    "glucoseEffect" : -30.478296525001845,
+    "minutesFromBolus" : 115
+  },
+  {
+    "glucoseEffect" : -31.809473500028524,
+    "minutesFromBolus" : 120
+  },
+  {
+    "glucoseEffect" : -33.07694859419651,
+    "minutesFromBolus" : 125
+  },
+  {
+    "glucoseEffect" : -34.280893321888456,
+    "minutesFromBolus" : 130
+  },
+  {
+    "glucoseEffect" : -35.42193476330132,
+    "minutesFromBolus" : 135
+  },
+  {
+    "glucoseEffect" : -36.50107835877757,
+    "minutesFromBolus" : 140
+  },
+  {
+    "glucoseEffect" : -37.519640224329244,
+    "minutesFromBolus" : 145
+  },
+  {
+    "glucoseEffect" : -38.47918796288863,
+    "minutesFromBolus" : 150
+  },
+  {
+    "glucoseEffect" : -39.381489048031376,
+    "minutesFromBolus" : 155
+  },
+  {
+    "glucoseEffect" : -40.22846594944823,
+    "minutesFromBolus" : 160
+  },
+  {
+    "glucoseEffect" : -41.02215725317559,
+    "minutesFromBolus" : 165
+  },
+  {
+    "glucoseEffect" : -41.76468410533706,
+    "minutesFromBolus" : 170
+  },
+  {
+    "glucoseEffect" : -42.45822137663254,
+    "minutesFromBolus" : 175
+  },
+  {
+    "glucoseEffect" : -43.10497300670729,
+    "minutesFromBolus" : 180
+  },
+  {
+    "glucoseEffect" : -43.707151043447176,
+    "minutesFromBolus" : 185
+  },
+  {
+    "glucoseEffect" : -44.2669579427354,
+    "minutesFromBolus" : 190
+  },
+  {
+    "glucoseEffect" : -44.78657173977124,
+    "minutesFromBolus" : 195
+  },
+  {
+    "glucoseEffect" : -45.268133744154326,
+    "minutesFromBolus" : 200
+  },
+  {
+    "glucoseEffect" : -45.71373844799477,
+    "minutesFromBolus" : 205
+  },
+  {
+    "glucoseEffect" : -46.1254253697002,
+    "minutesFromBolus" : 210
+  },
+  {
+    "glucoseEffect" : -46.50517258616075,
+    "minutesFromBolus" : 215
+  },
+  {
+    "glucoseEffect" : -46.8548917331163,
+    "minutesFromBolus" : 220
+  },
+  {
+    "glucoseEffect" : -47.17642427783189,
+    "minutesFromBolus" : 225
+  },
+  {
+    "glucoseEffect" : -47.47153889008629,
+    "minutesFromBolus" : 230
+  },
+  {
+    "glucoseEffect" : -47.741929757131075,
+    "minutesFromBolus" : 235
+  },
+  {
+    "glucoseEffect" : -47.98921570591691,
+    "minutesFromBolus" : 240
+  },
+  {
+    "glucoseEffect" : -48.214940011703646,
+    "minutesFromBolus" : 245
+  },
+  {
+    "glucoseEffect" : -48.42057078634827,
+    "minutesFromBolus" : 250
+  },
+  {
+    "glucoseEffect" : -48.60750185225904,
+    "minutesFromBolus" : 255
+  },
+  {
+    "glucoseEffect" : -48.77705401935996,
+    "minutesFromBolus" : 260
+  },
+  {
+    "glucoseEffect" : -48.93047669255946,
+    "minutesFromBolus" : 265
+  },
+  {
+    "glucoseEffect" : -49.06894974627858,
+    "minutesFromBolus" : 270
+  },
+  {
+    "glucoseEffect" : -49.1935856106762,
+    "minutesFromBolus" : 275
+  },
+  {
+    "glucoseEffect" : -49.305431521408686,
+    "minutesFromBolus" : 280
+  },
+  {
+    "glucoseEffect" : -49.40547189116785,
+    "minutesFromBolus" : 285
+  },
+  {
+    "glucoseEffect" : -49.49463076693445,
+    "minutesFromBolus" : 290
+  },
+  {
+    "glucoseEffect" : -49.5737743419358,
+    "minutesFromBolus" : 295
+  },
+  {
+    "glucoseEffect" : -49.64371349577325,
+    "minutesFromBolus" : 300
+  },
+  {
+    "glucoseEffect" : -49.7052063401448,
+    "minutesFromBolus" : 305
+  },
+  {
+    "glucoseEffect" : -49.7589607510857,
+    "minutesFromBolus" : 310
+  },
+  {
+    "glucoseEffect" : -49.80563687173237,
+    "minutesFromBolus" : 315
+  },
+  {
+    "glucoseEffect" : -49.84584957232635,
+    "minutesFromBolus" : 320
+  },
+  {
+    "glucoseEffect" : -49.880170856555225,
+    "minutesFromBolus" : 325
+  },
+  {
+    "glucoseEffect" : -49.90913220541074,
+    "minutesFromBolus" : 330
+  },
+  {
+    "glucoseEffect" : -49.93322685156371,
+    "minutesFromBolus" : 335
+  },
+  {
+    "glucoseEffect" : -49.952911978838806,
+    "minutesFromBolus" : 340
+  },
+  {
+    "glucoseEffect" : -49.96861084274627,
+    "minutesFromBolus" : 345
+  },
+  {
+    "glucoseEffect" : -49.98071480921524,
+    "minutesFromBolus" : 350
+  },
+  {
+    "glucoseEffect" : -49.98958530969473,
+    "minutesFromBolus" : 355
+  },
+  {
+    "glucoseEffect" : -49.99555571166429,
+    "minutesFromBolus" : 360
+  },
+  {
+    "glucoseEffect" : -49.99893310434098,
+    "minutesFromBolus" : 365
+  },
+  {
+    "glucoseEffect" : -50,
+    "minutesFromBolus" : 370
+  }
+]
