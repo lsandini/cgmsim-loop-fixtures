@@ -1,0 +1,70 @@
+{
+  "kind": "predict_glucose",
+  "_comment": "Sum of two cumulative effect timelines (real insulin-lowering + synthetic carb-rising), no momentum. Tests per-timeline differencing + accumulation.",
+  "startingGlucose": {
+    "date": "2026-03-02T12:00:00Z",
+    "value": 120
+  },
+  "effects": [
+    [
+      {
+        "date": "2026-03-02T12:00:00Z",
+        "value": 0
+      },
+      {
+        "date": "2026-03-02T12:30:00Z",
+        "value": -2.776711
+      },
+      {
+        "date": "2026-03-02T13:00:00Z",
+        "value": -12.371595
+      },
+      {
+        "date": "2026-03-02T13:30:00Z",
+        "value": -22.904894
+      },
+      {
+        "date": "2026-03-02T14:00:00Z",
+        "value": -31.809474
+      },
+      {
+        "date": "2026-03-02T14:30:00Z",
+        "value": -38.479188
+      },
+      {
+        "date": "2026-03-02T15:00:00Z",
+        "value": -43.104973
+      }
+    ],
+    [
+      {
+        "date": "2026-03-02T12:00:00Z",
+        "value": 0
+      },
+      {
+        "date": "2026-03-02T12:30:00Z",
+        "value": 6
+      },
+      {
+        "date": "2026-03-02T13:00:00Z",
+        "value": 16
+      },
+      {
+        "date": "2026-03-02T13:30:00Z",
+        "value": 27
+      },
+      {
+        "date": "2026-03-02T14:00:00Z",
+        "value": 36
+      },
+      {
+        "date": "2026-03-02T14:30:00Z",
+        "value": 43
+      },
+      {
+        "date": "2026-03-02T15:00:00Z",
+        "value": 48
+      }
+    ]
+  ]
+}

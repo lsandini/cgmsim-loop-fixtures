@@ -1,0 +1,88 @@
+{
+  "kind": "predict_glucose",
+  "_comment": "Same two effects + a 4-point momentum timeline (5-min) blended linearly. Tests the momentum blend (blendCount=2).",
+  "startingGlucose": {
+    "date": "2026-03-02T12:00:00Z",
+    "value": 120
+  },
+  "momentum": [
+    {
+      "date": "2026-03-02T12:00:00Z",
+      "value": 0
+    },
+    {
+      "date": "2026-03-02T12:05:00Z",
+      "value": 3
+    },
+    {
+      "date": "2026-03-02T12:10:00Z",
+      "value": 5
+    },
+    {
+      "date": "2026-03-02T12:15:00Z",
+      "value": 6
+    }
+  ],
+  "effects": [
+    [
+      {
+        "date": "2026-03-02T12:00:00Z",
+        "value": 0
+      },
+      {
+        "date": "2026-03-02T12:30:00Z",
+        "value": -2.776711
+      },
+      {
+        "date": "2026-03-02T13:00:00Z",
+        "value": -12.371595
+      },
+      {
+        "date": "2026-03-02T13:30:00Z",
+        "value": -22.904894
+      },
+      {
+        "date": "2026-03-02T14:00:00Z",
+        "value": -31.809474
+      },
+      {
+        "date": "2026-03-02T14:30:00Z",
+        "value": -38.479188
+      },
+      {
+        "date": "2026-03-02T15:00:00Z",
+        "value": -43.104973
+      }
+    ],
+    [
+      {
+        "date": "2026-03-02T12:00:00Z",
+        "value": 0
+      },
+      {
+        "date": "2026-03-02T12:30:00Z",
+        "value": 6
+      },
+      {
+        "date": "2026-03-02T13:00:00Z",
+        "value": 16
+      },
+      {
+        "date": "2026-03-02T13:30:00Z",
+        "value": 27
+      },
+      {
+        "date": "2026-03-02T14:00:00Z",
+        "value": 36
+      },
+      {
+        "date": "2026-03-02T14:30:00Z",
+        "value": 43
+      },
+      {
+        "date": "2026-03-02T15:00:00Z",
+        "value": 48
+      }
+    ]
+  ]
+}

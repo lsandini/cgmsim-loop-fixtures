@@ -13,6 +13,8 @@
 //                             the call the live closed-loop controller makes every 5 min.
 //   "automatic_dose_recommendation" — recommendedAutomaticDose (DoseMath): the
 //                             SMB-style auto path — partial bolus + (low-only) temp.
+//   "predict_glucose"       — LoopMath.predictGlucose: compose momentum + N effect
+//                             timelines into the predicted glucose curve.
 
 import Foundation
 import HealthKit
@@ -285,6 +287,48 @@ func runTempBasalRecommendation(_ data: Data) {
     } else {
         emit(Fixture(isNil: true, unitsPerHour: nil, durationMinutes: nil))
     }
+}
+
+// MARK: - kind: predict_glucose
+
+/// `LoopMath.predictGlucose` — composes a starting glucose, an optional momentum
+/// timeline, and N effect timelines (insulin, carb, RC, …) into the predicted
+/// glucose curve the recommenders consume. Each effect timeline contributes its
+/// per-step *change* (differenced against its own first value); momentum is
+/// linearly blended (overwrite-style) rather than summed. Validates the JS
+/// `predictGlucoseFromEffects` (loop-predictions.js) — the composition step,
+/// decoupled from how the individual effects are generated.
+func runPredictGlucose(_ data: Data) {
+    struct Point: Decodable { let date: String; let value: Double }
+    struct Scenario: Decodable {
+        let startingGlucose: Point
+        let momentum: [Point]?       // optional; <2 points ⇒ no blend
+        let effects: [[Point]]       // one or more cumulative effect timelines (mg/dL)
+    }
+    struct Out: Encodable { let date: String; let value: Double }
+
+    guard let s = try? JSONDecoder().decode(Scenario.self, from: data) else {
+        fail("cannot decode predict_glucose scenario")
+    }
+
+    func effectPoints(_ pts: [Point], _ label: String) -> [GlucoseEffect] {
+        pts.map { p in
+            guard let d = isoUTC.date(from: p.date) else { fail("cannot parse \(label) date: \(p.date)") }
+            return GlucoseEffect(startDate: d, quantity: HKQuantity(unit: mgdLUnit, doubleValue: p.value))
+        }
+    }
+
+    guard let startDate = isoUTC.date(from: s.startingGlucose.date) else {
+        fail("cannot parse startingGlucose date: \(s.startingGlucose.date)")
+    }
+    let starting = SimpleGlucose(startDate: startDate,
+                                 quantity: HKQuantity(unit: mgdLUnit, doubleValue: s.startingGlucose.value))
+    let momentum = effectPoints(s.momentum ?? [], "momentum")
+    let effects = s.effects.enumerated().map { effectPoints($1, "effects[\($0)]") }
+
+    let prediction = LoopMath.predictGlucose(startingAt: starting, momentum: momentum, effects: effects)
+
+    emit(prediction.map { Out(date: isoUTC.string(from: $0.startDate), value: $0.quantity.doubleValue(for: mgdLUnit)) })
 }
 
 // MARK: - kind: automatic_dose_recommendation
@@ -573,5 +617,6 @@ case "dosing_recommendation": runDosingRecommendation(data)
 case "dynamic_carb_effect":   runDynamicCarbEffect(data)
 case "temp_basal_recommendation": runTempBasalRecommendation(data)
 case "automatic_dose_recommendation": runAutomaticDoseRecommendation(data)
+case "predict_glucose":       runPredictGlucose(data)
 default:                      fail("unknown scenario kind: \(kind)")
 }

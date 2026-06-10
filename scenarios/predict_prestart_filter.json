@@ -1,0 +1,32 @@
+{
+  "kind": "predict_glucose",
+  "_comment": "One effect timeline whose first point precedes startingGlucose (T-30). Tests the date>start output filter and timeline.first baseline.",
+  "startingGlucose": {
+    "date": "2026-03-02T12:00:00Z",
+    "value": 100
+  },
+  "effects": [
+    [
+      {
+        "date": "2026-03-02T11:30:00Z",
+        "value": 0
+      },
+      {
+        "date": "2026-03-02T12:00:00Z",
+        "value": 0
+      },
+      {
+        "date": "2026-03-02T12:30:00Z",
+        "value": 10
+      },
+      {
+        "date": "2026-03-02T13:00:00Z",
+        "value": 18
+      },
+      {
+        "date": "2026-03-02T13:30:00Z",
+        "value": 24
+      }
+    ]
+  ]
+}
