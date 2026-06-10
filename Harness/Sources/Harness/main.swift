@@ -91,11 +91,12 @@ func reconcileTempBasals(_ doses: [DoseEntry]) -> [DoseEntry] {
     var reconciled: [DoseEntry] = []
     for (i, cur) in temps.enumerated() {
         // Swift reconciled(): trim `last` to min(last.endDate, nextDose.startDate).
+        // Use the public `trimmed(from:to:)` — exactly what reconciled() calls —
+        // which keeps a temp's per-hour rate while shrinking its interval (DoseEntry
+        // `value`/`unit` are internal, so we can't reconstruct it directly).
         let end = (i + 1 < temps.count) ? min(cur.endDate, temps[i + 1].startDate) : cur.endDate
         if end > cur.startDate {   // drop 0-duration after truncation (Swift's guard)
-            reconciled.append(DoseEntry(
-                type: .tempBasal, startDate: cur.startDate, endDate: end,
-                value: cur.value, unit: cur.unit, insulinType: cur.insulinType))
+            reconciled.append(cur.trimmed(from: nil, to: end))
         }
     }
     return others + reconciled
