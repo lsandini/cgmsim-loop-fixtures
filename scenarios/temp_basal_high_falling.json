@@ -1,0 +1,39 @@
+{
+  "kind": "temp_basal_recommendation",
+  "_comment": "aboveRange, falling to ~124 (>target high) -> no cap; mid-range rate well under maxBasalRate, exercises clean units/duration+scheduled path.",
+  "glucose": [
+    {
+      "date": "2015-07-19T18:00:00Z",
+      "value": 240
+    },
+    {
+      "date": "2015-07-19T19:00:00Z",
+      "value": 220
+    },
+    {
+      "date": "2015-07-19T20:00:00Z",
+      "value": 200
+    },
+    {
+      "date": "2015-07-19T21:00:00Z",
+      "value": 160
+    },
+    {
+      "date": "2015-07-19T22:00:00Z",
+      "value": 124
+    }
+  ],
+  "targetLow_mgdL": 90,
+  "targetHigh_mgdL": 120,
+  "suspendThreshold_mgdL": 55,
+  "insulinSensitivity_mgdLperU": 60,
+  "peakActivityMinutes": 75,
+  "actionDurationHours": 6,
+  "delayMinutes": 0,
+  "scheduledBasalRate_UperHr": 1.0,
+  "maxBasalRate_UperHr": 3.0,
+  "currentIOB": 0.0,
+  "maxBolus": 5.0,
+  "rateIncrement_UperHr": 0.05,
+  "durationMinutes": 30
+}
