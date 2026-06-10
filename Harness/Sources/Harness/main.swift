@@ -252,7 +252,11 @@ func runTempBasalRecommendation(_ data: Data) {
         let maxBolus: Double            // JS MAX_BOLUS (for IOB-clamp parity)
         let rateIncrement_UperHr: Double // JS rounds rate to this (0.05)
         let durationMinutes: Double      // JS TEMP_BASAL_DURATION (30)
+        // Optional TIME-AWARE target schedule (§9c). Each entry's startMinutesOfDay
+        // is seconds-from-midnight/60. When present, overrides targetLow/High.
+        let targetSchedule: [TargetEntry]?
     }
+    struct TargetEntry: Decodable { let startMinutesOfDay: Double; let low: Double; let high: Double }
     struct Fixture: Encodable {
         let isNil: Bool                 // recommendedTempBasal returned nil (no temp needed)
         let unitsPerHour: Double?
@@ -269,10 +273,17 @@ func runTempBasalRecommendation(_ data: Data) {
     }
     guard let first = glucose.first else { fail("empty glucose array") }
 
-    guard let target = GlucoseRangeSchedule(
-        unit: mgdLUnit,
-        dailyItems: [RepeatingScheduleValue(startTime: 0, value: DoubleRange(minValue: s.targetLow_mgdL, maxValue: s.targetHigh_mgdL))]
-    ) else { fail("cannot build glucose target range schedule") }
+    // Build the correction range — a multi-entry GlucoseRangeSchedule when a
+    // time-aware targetSchedule is given (§9c), else a flat single range.
+    let targetItems: [RepeatingScheduleValue<DoubleRange>]
+    if let sched = s.targetSchedule, !sched.isEmpty {
+        targetItems = sched.map { RepeatingScheduleValue(startTime: $0.startMinutesOfDay * 60.0,
+                                                          value: DoubleRange(minValue: $0.low, maxValue: $0.high)) }
+    } else {
+        targetItems = [RepeatingScheduleValue(startTime: 0, value: DoubleRange(minValue: s.targetLow_mgdL, maxValue: s.targetHigh_mgdL))]
+    }
+    guard let target = GlucoseRangeSchedule(unit: mgdLUnit, dailyItems: targetItems)
+    else { fail("cannot build glucose target range schedule") }
 
     guard let sensitivity = InsulinSensitivitySchedule(
         unit: mgdLUnit,

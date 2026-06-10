@@ -1,0 +1,88 @@
+{
+  "kind": "temp_basal_recommendation",
+  "_comment": "\u00a79c TIME-AWARE TARGET: forecast window 07:30-13:30 spans an 08:00 target transition [100,110]->[90,100]. Swift evaluates quantityRange(at: prediction) per point; JS must too. High&stable 170 makes the target band drive the rate.",
+  "glucose": [
+    {
+      "date": "2026-03-02T07:30:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T08:00:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T08:30:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T09:00:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T09:30:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T10:00:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T10:30:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T11:00:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T11:30:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T12:00:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T12:30:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T13:00:00Z",
+      "value": 170.0
+    },
+    {
+      "date": "2026-03-02T13:30:00Z",
+      "value": 170.0
+    }
+  ],
+  "targetLow_mgdL": 100,
+  "targetHigh_mgdL": 110,
+  "suspendThreshold_mgdL": 55,
+  "insulinSensitivity_mgdLperU": 50,
+  "peakActivityMinutes": 75,
+  "actionDurationHours": 6,
+  "delayMinutes": 0,
+  "scheduledBasalRate_UperHr": 1.0,
+  "maxBasalRate_UperHr": 10.0,
+  "currentIOB": 0.0,
+  "maxBolus": 5.0,
+  "rateIncrement_UperHr": 0.05,
+  "durationMinutes": 30,
+  "targetSchedule": [
+    {
+      "startMinutesOfDay": 0,
+      "low": 100,
+      "high": 110
+    },
+    {
+      "startMinutesOfDay": 480,
+      "low": 90,
+      "high": 100
+    },
+    {
+      "startMinutesOfDay": 1260,
+      "low": 100,
+      "high": 110
+    }
+  ]
+}
