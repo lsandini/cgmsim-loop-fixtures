@@ -1,0 +1,39 @@
+{
+  "kind": "automatic_dose_recommendation",
+  "_comment": "mild below-target -> small negative correction -> PARTIAL temp reduction (0<rate<scheduled); bolus 0.",
+  "glucose": [
+    {
+      "date": "2026-03-02T12:00:00Z",
+      "value": 105
+    },
+    {
+      "date": "2026-03-02T12:30:00Z",
+      "value": 100
+    },
+    {
+      "date": "2026-03-02T13:00:00Z",
+      "value": 96
+    },
+    {
+      "date": "2026-03-02T13:30:00Z",
+      "value": 92
+    },
+    {
+      "date": "2026-03-02T14:00:00Z",
+      "value": 89
+    }
+  ],
+  "targetLow_mgdL": 90,
+  "targetHigh_mgdL": 120,
+  "suspendThreshold_mgdL": 55,
+  "insulinSensitivity_mgdLperU": 60,
+  "peakActivityMinutes": 75,
+  "actionDurationHours": 6,
+  "delayMinutes": 0,
+  "scheduledBasalRate_UperHr": 1.0,
+  "maxAutomaticBolus": 5.0,
+  "partialApplicationFactor": 0.4,
+  "bolusIncrement_U": 0.05,
+  "rateIncrement_UperHr": 0.05,
+  "durationMinutes": 30
+}

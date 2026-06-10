@@ -1,0 +1,39 @@
+{
+  "kind": "automatic_dose_recommendation",
+  "_comment": "aboveRange min<minTarget -> maxAutomaticBolus=0 safety; bolus 0, temp nil -> whole rec nil.",
+  "glucose": [
+    {
+      "date": "2015-07-19T18:00:00Z",
+      "value": 60
+    },
+    {
+      "date": "2015-07-19T19:00:00Z",
+      "value": 80
+    },
+    {
+      "date": "2015-07-19T20:00:00Z",
+      "value": 120
+    },
+    {
+      "date": "2015-07-19T21:00:00Z",
+      "value": 160
+    },
+    {
+      "date": "2015-07-19T22:00:00Z",
+      "value": 200
+    }
+  ],
+  "targetLow_mgdL": 90,
+  "targetHigh_mgdL": 120,
+  "suspendThreshold_mgdL": 55,
+  "insulinSensitivity_mgdLperU": 60,
+  "peakActivityMinutes": 75,
+  "actionDurationHours": 6,
+  "delayMinutes": 0,
+  "scheduledBasalRate_UperHr": 1.0,
+  "maxAutomaticBolus": 5.0,
+  "partialApplicationFactor": 0.4,
+  "bolusIncrement_U": 0.05,
+  "rateIncrement_UperHr": 0.05,
+  "durationMinutes": 30
+}

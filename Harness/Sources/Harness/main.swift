@@ -11,6 +11,8 @@
 //                             dynamicGlucoseEffects + dynamicCarbsOnBoard (CarbMath).
 //   "temp_basal_recommendation" — recommendedTempBasal for a glucose curve (DoseMath):
 //                             the call the live closed-loop controller makes every 5 min.
+//   "automatic_dose_recommendation" — recommendedAutomaticDose (DoseMath): the
+//                             SMB-style auto path — partial bolus + (low-only) temp.
 
 import Foundation
 import HealthKit
@@ -285,6 +287,114 @@ func runTempBasalRecommendation(_ data: Data) {
     }
 }
 
+// MARK: - kind: automatic_dose_recommendation
+
+/// `recommendedAutomaticDose` — the SMB-style automatic path: a partial bolus for
+/// high corrections plus a temp basal that, in auto mode, is capped at the
+/// SCHEDULED basal rate (so it can only *reduce* basal for low glucose; high
+/// corrections come out as the bolus). Returns nil if neither piece is needed.
+///
+/// PARITY NOTES — to match `loopkit.js` `recommendAutomaticDose` exactly:
+///   • `partialApplicationFactor` — JS `computeApplicationFactor` returns the
+///     constant `PARTIAL_APPLICATION_FACTOR` (0.4) under the 'constant' strategy;
+///     pass that same scalar.
+///   • `volumeRounder` (bolus) — JS `asPartialBolus` rounds both the partial dose
+///     AND maxBolusUnits to `BOLUS_INCREMENT`; pass a matching rounder (Swift's
+///     `asPartialBolus` applies `volumeRounder` to both, identically).
+///   • `rateRounder` (temp) — JS `asTempBasal` rounds to 0.05 U/hr; pass a matching
+///     rounder (Swift default is none).
+///   • **NO IOB clamp here.** Swift's `recommendedAutomaticDose` (DoseMath) has no
+///     `additionalActiveInsulinClamp` — the IOB cap that JS applies to
+///     `maxAutomaticBolus` lives in the LoopDataManager layer JS fused in. The JS
+///     test sets `currentIOB = 0` (headroom = maxBolus*2 ≥ maxAutomaticBolus) so
+///     that JS-only cap is inert and the DoseMath-level math is what's compared.
+/// `lastTempBasal` nil; duration 30 min; continuationInterval 11 min.
+func runAutomaticDoseRecommendation(_ data: Data) {
+    struct GlucosePoint: Decodable { let date: String; let value: Double }
+    struct Scenario: Decodable {
+        let glucose: [GlucosePoint]
+        let targetLow_mgdL: Double
+        let targetHigh_mgdL: Double
+        let suspendThreshold_mgdL: Double
+        let insulinSensitivity_mgdLperU: Double
+        let peakActivityMinutes: Double
+        let actionDurationHours: Double
+        let delayMinutes: Double?
+        let scheduledBasalRate_UperHr: Double
+        let maxAutomaticBolus: Double
+        let partialApplicationFactor: Double
+        let bolusIncrement_U: Double      // JS BOLUS_INCREMENT (volumeRounder)
+        let rateIncrement_UperHr: Double  // JS temp rate rounding (0.05)
+        let durationMinutes: Double       // JS TEMP_BASAL_DURATION (30)
+    }
+    struct TempOut: Encodable { let unitsPerHour: Double; let durationMinutes: Double }
+    struct Fixture: Encodable {
+        let isNil: Bool                   // recommendedAutomaticDose returned nil
+        let basalAdjustment: TempOut?     // nil if no temp piece
+        let bolusUnits: Double?
+    }
+
+    guard let s = try? JSONDecoder().decode(Scenario.self, from: data) else {
+        fail("cannot decode automatic_dose_recommendation scenario")
+    }
+
+    let glucose: [SimpleGlucose] = s.glucose.map { pt in
+        guard let d = isoUTC.date(from: pt.date) else { fail("cannot parse glucose date: \(pt.date)") }
+        return SimpleGlucose(startDate: d, quantity: HKQuantity(unit: mgdLUnit, doubleValue: pt.value))
+    }
+    guard let first = glucose.first else { fail("empty glucose array") }
+
+    guard let target = GlucoseRangeSchedule(
+        unit: mgdLUnit,
+        dailyItems: [RepeatingScheduleValue(startTime: 0, value: DoubleRange(minValue: s.targetLow_mgdL, maxValue: s.targetHigh_mgdL))]
+    ) else { fail("cannot build glucose target range schedule") }
+
+    guard let sensitivity = InsulinSensitivitySchedule(
+        unit: mgdLUnit,
+        dailyItems: [RepeatingScheduleValue(startTime: 0, value: s.insulinSensitivity_mgdLperU)]
+    ) else { fail("cannot build insulin sensitivity schedule") }
+
+    guard let basalRates = BasalRateSchedule(
+        dailyItems: [RepeatingScheduleValue(startTime: 0, value: s.scheduledBasalRate_UperHr)]
+    ) else { fail("cannot build basal rate schedule") }
+
+    let model = ExponentialInsulinModel(
+        actionDuration: s.actionDurationHours * 3600.0,
+        peakActivityTime: s.peakActivityMinutes * 60.0,
+        delay: (s.delayMinutes ?? 10.0) * 60.0
+    )
+    let suspend = HKQuantity(unit: mgdLUnit, doubleValue: s.suspendThreshold_mgdL)
+
+    let bolusInc = s.bolusIncrement_U
+    let rateInc = s.rateIncrement_UperHr
+    let volumeRounder: (Double) -> Double = { ($0 / bolusInc).rounded() * bolusInc }
+    let rateRounder: (Double) -> Double = { ($0 / rateInc).rounded() * rateInc }
+
+    let rec = glucose.recommendedAutomaticDose(
+        to: target,
+        at: first.startDate,
+        suspendThreshold: suspend,
+        sensitivity: sensitivity,
+        model: model,
+        basalRates: basalRates,
+        maxAutomaticBolus: s.maxAutomaticBolus,
+        partialApplicationFactor: s.partialApplicationFactor,
+        lastTempBasal: nil,
+        volumeRounder: volumeRounder,
+        rateRounder: rateRounder,
+        isBasalRateScheduleOverrideActive: false,
+        duration: s.durationMinutes * 60.0,
+        continuationInterval: 11.0 * 60.0
+    )
+
+    if let rec = rec {
+        let temp = rec.basalAdjustment.map { TempOut(unitsPerHour: $0.unitsPerHour, durationMinutes: $0.duration / 60.0) }
+        emit(Fixture(isNil: false, basalAdjustment: temp, bolusUnits: rec.bolusUnits))
+    } else {
+        emit(Fixture(isNil: true, basalAdjustment: nil, bolusUnits: nil))
+    }
+}
+
 // MARK: - kind: dynamic_carb_effect
 
 /// The PRODUCTION carb-absorption path, exactly as Loop runs it every cycle:
@@ -462,5 +572,6 @@ case "insulin_effect":        runInsulinEffect(data)
 case "dosing_recommendation": runDosingRecommendation(data)
 case "dynamic_carb_effect":   runDynamicCarbEffect(data)
 case "temp_basal_recommendation": runTempBasalRecommendation(data)
+case "automatic_dose_recommendation": runAutomaticDoseRecommendation(data)
 default:                      fail("unknown scenario kind: \(kind)")
 }
