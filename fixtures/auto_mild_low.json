@@ -1,0 +1,8 @@
+{
+  "basalAdjustment" : {
+    "durationMinutes" : 30,
+    "unitsPerHour" : 0.05
+  },
+  "bolusUnits" : 0,
+  "isNil" : false
+}
