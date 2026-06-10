@@ -1,0 +1,189 @@
+{
+  "kind": "loop_prediction",
+  "_comment": "CAPSTONE \u00a7T1 PROBE: deliberately OVERLAPPING temp basals (11:30-11:45 overlap) to settle whether JS reconciles overlapping temps like Swift's annotated(with:basal).",
+  "now": "2026-03-02T12:00:00Z",
+  "glucose": [
+    {
+      "date": "2026-03-02T09:00:00Z",
+      "value": 100.81
+    },
+    {
+      "date": "2026-03-02T09:05:00Z",
+      "value": 101.01
+    },
+    {
+      "date": "2026-03-02T09:10:00Z",
+      "value": 101.25
+    },
+    {
+      "date": "2026-03-02T09:15:00Z",
+      "value": 101.55
+    },
+    {
+      "date": "2026-03-02T09:20:00Z",
+      "value": 101.92
+    },
+    {
+      "date": "2026-03-02T09:25:00Z",
+      "value": 102.37
+    },
+    {
+      "date": "2026-03-02T09:30:00Z",
+      "value": 102.92
+    },
+    {
+      "date": "2026-03-02T09:35:00Z",
+      "value": 103.59
+    },
+    {
+      "date": "2026-03-02T09:40:00Z",
+      "value": 104.4
+    },
+    {
+      "date": "2026-03-02T09:45:00Z",
+      "value": 105.36
+    },
+    {
+      "date": "2026-03-02T09:50:00Z",
+      "value": 106.51
+    },
+    {
+      "date": "2026-03-02T09:55:00Z",
+      "value": 107.84
+    },
+    {
+      "date": "2026-03-02T10:00:00Z",
+      "value": 109.39
+    },
+    {
+      "date": "2026-03-02T10:05:00Z",
+      "value": 111.14
+    },
+    {
+      "date": "2026-03-02T10:10:00Z",
+      "value": 113.11
+    },
+    {
+      "date": "2026-03-02T10:15:00Z",
+      "value": 115.27
+    },
+    {
+      "date": "2026-03-02T10:20:00Z",
+      "value": 117.58
+    },
+    {
+      "date": "2026-03-02T10:25:00Z",
+      "value": 120.01
+    },
+    {
+      "date": "2026-03-02T10:30:00Z",
+      "value": 122.5
+    },
+    {
+      "date": "2026-03-02T10:35:00Z",
+      "value": 124.99
+    },
+    {
+      "date": "2026-03-02T10:40:00Z",
+      "value": 127.42
+    },
+    {
+      "date": "2026-03-02T10:45:00Z",
+      "value": 129.73
+    },
+    {
+      "date": "2026-03-02T10:50:00Z",
+      "value": 131.89
+    },
+    {
+      "date": "2026-03-02T10:55:00Z",
+      "value": 133.86
+    },
+    {
+      "date": "2026-03-02T11:00:00Z",
+      "value": 135.61
+    },
+    {
+      "date": "2026-03-02T11:05:00Z",
+      "value": 137.16
+    },
+    {
+      "date": "2026-03-02T11:10:00Z",
+      "value": 138.49
+    },
+    {
+      "date": "2026-03-02T11:15:00Z",
+      "value": 139.64
+    },
+    {
+      "date": "2026-03-02T11:20:00Z",
+      "value": 140.6
+    },
+    {
+      "date": "2026-03-02T11:25:00Z",
+      "value": 141.41
+    },
+    {
+      "date": "2026-03-02T11:30:00Z",
+      "value": 142.08
+    },
+    {
+      "date": "2026-03-02T11:35:00Z",
+      "value": 142.63
+    },
+    {
+      "date": "2026-03-02T11:40:00Z",
+      "value": 143.08
+    },
+    {
+      "date": "2026-03-02T11:45:00Z",
+      "value": 143.45
+    },
+    {
+      "date": "2026-03-02T11:50:00Z",
+      "value": 143.75
+    },
+    {
+      "date": "2026-03-02T11:55:00Z",
+      "value": 143.99
+    },
+    {
+      "date": "2026-03-02T12:00:00Z",
+      "value": 144.19
+    }
+  ],
+  "doses": [
+    {
+      "type": "bolus",
+      "start": "2026-03-02T11:00:00Z",
+      "end": "2026-03-02T11:00:00Z",
+      "value": 3.0
+    },
+    {
+      "type": "tempBasal",
+      "start": "2026-03-02T11:00:00Z",
+      "end": "2026-03-02T11:45:00Z",
+      "value": 1.5
+    },
+    {
+      "type": "tempBasal",
+      "start": "2026-03-02T11:30:00Z",
+      "end": "2026-03-02T12:00:00Z",
+      "value": 0.5
+    }
+  ],
+  "carbEntries": [
+    {
+      "start": "2026-03-02T11:15:00Z",
+      "grams": 45,
+      "absorptionMinutes": 180
+    }
+  ],
+  "basalRate_UperHr": 0.9,
+  "insulinSensitivity_mgdLperU": 45,
+  "carbRatio_gPerU": 9,
+  "targetLow_mgdL": 100,
+  "targetHigh_mgdL": 120,
+  "insulinModel": "novolog",
+  "useIntegralRC": false
+}

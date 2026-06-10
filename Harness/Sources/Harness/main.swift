@@ -15,6 +15,11 @@
 //                             SMB-style auto path — partial bolus + (low-only) temp.
 //   "predict_glucose"       — LoopMath.predictGlucose: compose momentum + N effect
 //                             timelines into the predicted glucose curve.
+//   "loop_prediction"       — THE CAPSTONE: LoopAlgorithm.generatePrediction runs the
+//                             full pipeline (dose annotation incl. temp basals → insulin,
+//                             ICE, dynamic carbs, RC, momentum → predictGlucose) from a
+//                             realistic glucose/dose/carb history. Emits the predicted
+//                             curve + all 5 effect arrays for component-level comparison.
 
 import Foundation
 import HealthKit
@@ -286,6 +291,149 @@ func runTempBasalRecommendation(_ data: Data) {
         emit(Fixture(isNil: false, unitsPerHour: rec.unitsPerHour, durationMinutes: rec.duration / 60.0))
     } else {
         emit(Fixture(isNil: true, unitsPerHour: nil, durationMinutes: nil))
+    }
+}
+
+// MARK: - kind: loop_prediction  (THE CAPSTONE)
+
+/// `LoopAlgorithm.generatePrediction` — the whole forecast pipeline in one call:
+///   doses.annotated(with: basal)  → net insulin (the temp-basal/basal overlay = §T1)
+///     → insulin glucose effects
+///     → counteraction effects (ICE) from glucose vs insulin
+///     → dynamic carb effects (map(to: ICE) → dynamicGlucoseEffects)
+///     → retrospective correction (standard or integral)
+///     → momentum (linearMomentumEffect)
+///     → LoopMath.predictGlucose(...) → prediction (extended to insulin duration)
+/// Emits the predicted glucose curve PLUS each component effect array, so a JS
+/// divergence localizes to a single stage (insulin / carb / RC / momentum / ICE)
+/// rather than just "the curve is off". Built directly from a simple scenario
+/// (NOT by decoding LoopPredictionInput — that Codable path has a target-bound bug).
+func runLoopPrediction(_ data: Data) {
+    struct GlucosePoint: Decodable { let date: String; let value: Double }
+    struct DoseIn: Decodable {
+        let type: String          // "bolus" | "tempBasal"
+        let start: String
+        let end: String?
+        let value: Double         // bolus: units; tempBasal: U/hr
+    }
+    struct CarbIn: Decodable {
+        let start: String
+        let grams: Double
+        let absorptionMinutes: Double?
+    }
+    struct Scenario: Decodable {
+        let now: String                       // prediction anchor (= last glucose date, aligned)
+        let glucose: [GlucosePoint]
+        let doses: [DoseIn]
+        let carbEntries: [CarbIn]
+        let basalRate_UperHr: Double
+        let insulinSensitivity_mgdLperU: Double
+        let carbRatio_gPerU: Double
+        let targetLow_mgdL: Double
+        let targetHigh_mgdL: Double
+        let insulinModel: String?             // default rapid-acting adult
+        let useIntegralRC: Bool?
+    }
+    struct EffectOut: Encodable { let date: String; let value: Double }
+    struct IceOut: Encodable { let start: String; let end: String; let velocity_mgdL_per_min: Double }
+    struct EffectsOut: Encodable {
+        let insulin: [EffectOut]
+        let carbs: [EffectOut]
+        let retrospectiveCorrection: [EffectOut]
+        let momentum: [EffectOut]
+        let insulinCounteraction: [IceOut]
+    }
+    struct Fixture: Encodable {
+        let predictedGlucose: [EffectOut]
+        let effects: EffectsOut
+    }
+
+    guard let s = try? JSONDecoder().decode(Scenario.self, from: data) else {
+        fail("cannot decode loop_prediction scenario")
+    }
+    guard let anchor = isoUTC.date(from: s.now) else { fail("cannot parse now: \(s.now)") }
+
+    // Glucose history → StoredGlucoseSample.
+    let glucoseHistory: [StoredGlucoseSample] = s.glucose.map { pt in
+        guard let d = isoUTC.date(from: pt.date) else { fail("cannot parse glucose date: \(pt.date)") }
+        return StoredGlucoseSample(startDate: d, quantity: HKQuantity(unit: mgdLUnit, doubleValue: pt.value))
+    }
+
+    // Doses → DoseEntry (bolus in units; tempBasal in U/hr). No scheduledBasalRate
+    // set — generatePrediction's annotated(with: basal) overlays it.
+    let insType = insulinType(named: s.insulinModel ?? "novolog")
+    let doses: [DoseEntry] = s.doses.map { d in
+        guard let start = isoUTC.date(from: d.start) else { fail("cannot parse dose start: \(d.start)") }
+        let end = d.end.flatMap { isoUTC.date(from: $0) }
+        switch d.type.lowercased() {
+        case "bolus":
+            return DoseEntry(type: .bolus, startDate: start, endDate: end ?? start,
+                             value: d.value, unit: .units, insulinType: insType)
+        case "tempbasal":
+            guard let e = end else { fail("tempBasal dose needs an end date") }
+            return DoseEntry(type: .tempBasal, startDate: start, endDate: e,
+                             value: d.value, unit: .unitsPerHour, insulinType: insType)
+        default:
+            fail("unknown dose type: \(d.type)")
+        }
+    }
+
+    // Carb entries → StoredCarbEntry.
+    let gram = HKUnit.gram()
+    let carbEntries: [StoredCarbEntry] = s.carbEntries.map { c in
+        guard let d = isoUTC.date(from: c.start) else { fail("cannot parse carb start: \(c.start)") }
+        return StoredCarbEntry(startDate: d, quantity: HKQuantity(unit: gram, doubleValue: c.grams),
+                               absorptionTime: c.absorptionMinutes.map { $0 * 60.0 })
+    }
+
+    // Flat all-day schedules (distantPast→distantFuture so closestPrior/value(at:)
+    // and the dose-annotation basal precondition are satisfied for any date).
+    let basal = [AbsoluteScheduleValue(startDate: .distantPast, endDate: .distantFuture, value: s.basalRate_UperHr)]
+    let sensitivity = [AbsoluteScheduleValue(startDate: .distantPast, endDate: .distantFuture,
+                                             value: HKQuantity(unit: mgdLUnit, doubleValue: s.insulinSensitivity_mgdLperU))]
+    let carbRatio = [AbsoluteScheduleValue(startDate: .distantPast, endDate: .distantFuture, value: s.carbRatio_gPerU)]
+    let lo = HKQuantity(unit: mgdLUnit, doubleValue: s.targetLow_mgdL)
+    let hi = HKQuantity(unit: mgdLUnit, doubleValue: s.targetHigh_mgdL)
+    let target = [AbsoluteScheduleValue(startDate: .distantPast, endDate: .distantFuture,
+                                        value: ClosedRange(uncheckedBounds: (lower: lo, upper: hi)))]
+
+    let settings = LoopAlgorithmSettings(
+        basal: basal,
+        sensitivity: sensitivity,
+        carbRatio: carbRatio,
+        target: target,
+        algorithmEffectsOptions: .all,
+        useIntegralRetrospectiveCorrection: s.useIntegralRC ?? false
+    )
+
+    let input = LoopPredictionInput(
+        glucoseHistory: glucoseHistory,
+        doses: doses,
+        carbEntries: carbEntries,
+        settings: settings
+    )
+
+    let mgdLPerMin = mgdLUnit.unitDivided(by: .minute())
+    do {
+        let p = try LoopAlgorithm.generatePrediction(input: input, startDate: anchor)
+        let toEff: ([GlucoseEffect]) -> [EffectOut] = { arr in
+            arr.map { EffectOut(date: isoUTC.string(from: $0.startDate), value: $0.quantity.doubleValue(for: mgdLUnit)) }
+        }
+        emit(Fixture(
+            predictedGlucose: p.glucose.map { EffectOut(date: isoUTC.string(from: $0.startDate), value: $0.quantity.doubleValue(for: mgdLUnit)) },
+            effects: EffectsOut(
+                insulin: toEff(p.effects.insulin),
+                carbs: toEff(p.effects.carbs),
+                retrospectiveCorrection: toEff(p.effects.retrospectiveCorrection),
+                momentum: toEff(p.effects.momentum),
+                insulinCounteraction: p.effects.insulinCounteraction.map {
+                    IceOut(start: isoUTC.string(from: $0.startDate), end: isoUTC.string(from: $0.endDate),
+                           velocity_mgdL_per_min: $0.quantity.doubleValue(for: mgdLPerMin))
+                }
+            )
+        ))
+    } catch {
+        fail("generatePrediction threw: \(error)")
     }
 }
 
@@ -618,5 +766,6 @@ case "dynamic_carb_effect":   runDynamicCarbEffect(data)
 case "temp_basal_recommendation": runTempBasalRecommendation(data)
 case "automatic_dose_recommendation": runAutomaticDoseRecommendation(data)
 case "predict_glucose":       runPredictGlucose(data)
+case "loop_prediction":       runLoopPrediction(data)
 default:                      fail("unknown scenario kind: \(kind)")
 }
