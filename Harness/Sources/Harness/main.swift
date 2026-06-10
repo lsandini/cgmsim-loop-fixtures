@@ -7,6 +7,8 @@
 // Kinds:
 //   "insulin_effect"        — glucose-effect curve of a single bolus (InsulinMath).
 //   "dosing_recommendation" — recommendedManualBolus for a glucose curve (DoseMath).
+//   "dynamic_carb_effect"   — PRODUCTION carb path: entries + ICE → map(to:) →
+//                             dynamicGlucoseEffects + dynamicCarbsOnBoard (CarbMath).
 
 import Foundation
 import HealthKit
@@ -179,6 +181,165 @@ func runDosingRecommendation(_ data: Data) {
     emit(Fixture(recommendedBolusUnits: dose.amount))
 }
 
+// MARK: - kind: dynamic_carb_effect
+
+/// The PRODUCTION carb-absorption path, exactly as Loop runs it every cycle:
+///   [CarbEntry].map(to: ICE, …)  → [CarbStatus]   (CarbStatusBuilder allocation)
+///   statuses.dynamicGlucoseEffects(from:to:…)     (observed + modeled projection)
+///   statuses.dynamicCarbsOnBoard(from:to:…)
+/// ICE = insulin counteraction effects, a timeline of glucose-change velocities
+/// (observed Δglucose − modeled insulin effect). All APIs are public in v3.14.2.
+/// The static CarbMath.glucoseEffects path is internal AND non-production — skipped.
+func runDynamicCarbEffect(_ data: Data) {
+    struct CarbEntryIn: Decodable {
+        let start: String
+        let grams: Double
+        let absorptionTimeMinutes: Double?   // nil ⇒ defaultAbsorptionTime
+    }
+    struct IceIn: Decodable {
+        let start: String
+        let end: String
+        let velocity_mgdL_per_min: Double
+    }
+    struct Scenario: Decodable {
+        let carbEntries: [CarbEntryIn]
+        let ice: [IceIn]
+        let carbRatio_gPerU: Double
+        let insulinSensitivity_mgdLperU: Double
+        let absorptionTimeOverrun: Double          // production: 1.5
+        let initialAbsorptionTimeOverrun: Double   // production: 1.5
+        let defaultAbsorptionTimeMinutes: Double   // production: 180
+        let delayMinutes: Double                   // production: 10
+        let deltaMinutes: Double                   // production: 5
+        let effectFrom: String                     // `from` for both timelines
+        let effectToHoursAfter: Double             // `to` = from + this
+    }
+    struct EffectOut: Encodable { let date: String; let value_mgdL: Double }
+    struct CobOut: Encodable { let date: String; let grams: Double }
+    struct AbsorptionOut: Encodable {
+        let entryStart: String
+        let entryGrams: Double
+        let observedGrams: Double
+        let clampedGrams: Double
+        let totalGrams: Double
+        let remainingGrams: Double
+        let observedDateStart: String
+        let observedDateEnd: String
+        let estimatedTimeRemainingMinutes: Double
+        let timeToAbsorbObservedCarbsMinutes: Double
+        let observedTimelineCount: Int   // -1 if observedTimeline is nil
+    }
+    struct Fixture: Encodable {
+        let glucoseEffects: [EffectOut]   // cumulative mg/dL (absolute, like Swift)
+        let carbsOnBoard: [CobOut]        // grams remaining at each grid point
+        let absorption: [AbsorptionOut]   // per-entry builder result (divergence localization)
+    }
+
+    guard let s = try? JSONDecoder().decode(Scenario.self, from: data) else {
+        fail("cannot decode dynamic_carb_effect scenario")
+    }
+
+    let gram = HKUnit.gram()
+    let velocityUnit = mgdLUnit.unitDivided(by: .minute())
+
+    let entries: [NewCarbEntry] = s.carbEntries.map { e in
+        guard let d = isoUTC.date(from: e.start) else { fail("cannot parse carb entry start: \(e.start)") }
+        // `date:` defaults to Date() — pass explicitly to stay deterministic.
+        return NewCarbEntry(
+            date: d,
+            quantity: HKQuantity(unit: gram, doubleValue: e.grams),
+            startDate: d,
+            foodType: nil,
+            absorptionTime: e.absorptionTimeMinutes.map { $0 * 60.0 }
+        )
+    }
+
+    let ice: [GlucoseEffectVelocity] = s.ice.map { v in
+        guard let sd = isoUTC.date(from: v.start), let ed = isoUTC.date(from: v.end) else {
+            fail("cannot parse ICE interval dates: \(v.start) / \(v.end)")
+        }
+        return GlucoseEffectVelocity(
+            startDate: sd, endDate: ed,
+            quantity: HKQuantity(unit: velocityUnit, doubleValue: v.velocity_mgdL_per_min)
+        )
+    }
+
+    // Flat schedules covering all entry dates (closestPrior just needs start ≤ date).
+    let carbRatios = [AbsoluteScheduleValue(startDate: .distantPast, endDate: .distantFuture, value: s.carbRatio_gPerU)]
+    let sensitivities = [AbsoluteScheduleValue(
+        startDate: .distantPast, endDate: .distantFuture,
+        value: HKQuantity(unit: mgdLUnit, doubleValue: s.insulinSensitivity_mgdLperU)
+    )]
+
+    let defaultAbsorption = s.defaultAbsorptionTimeMinutes * 60.0
+    let delay = s.delayMinutes * 60.0
+    let delta = s.deltaMinutes * 60.0
+    let model = PiecewiseLinearAbsorption()   // production absorption model
+
+    let statuses = entries.map(
+        to: ice,
+        carbRatio: carbRatios,
+        insulinSensitivity: sensitivities,
+        absorptionTimeOverrun: s.absorptionTimeOverrun,
+        defaultAbsorptionTime: defaultAbsorption,
+        delay: delay,
+        initialAbsorptionTimeOverrun: s.initialAbsorptionTimeOverrun,
+        absorptionModel: model,
+        adaptiveAbsorptionRateEnabled: false,
+        adaptiveRateStandbyIntervalFraction: 0.2
+    )
+
+    guard let from = isoUTC.date(from: s.effectFrom) else { fail("cannot parse effectFrom: \(s.effectFrom)") }
+    let to = from.addingTimeInterval(s.effectToHoursAfter * 3600.0)
+
+    let effects = statuses.dynamicGlucoseEffects(
+        from: from, to: to,
+        carbRatios: carbRatios,
+        insulinSensitivities: sensitivities,
+        defaultAbsorptionTime: defaultAbsorption,
+        absorptionModel: model,
+        delay: delay,
+        delta: delta
+    )
+
+    let cob = statuses.dynamicCarbsOnBoard(
+        from: from, to: to,
+        defaultAbsorptionTime: defaultAbsorption,
+        absorptionModel: model,
+        delay: delay,
+        delta: delta
+    )
+
+    let absorption: [AbsorptionOut] = statuses.map { st in
+        guard let a = st.absorption else {
+            fail("CarbStatus has no absorption for entry at \(isoUTC.string(from: st.entry.startDate)) — ICE must overlap entries")
+        }
+        return AbsorptionOut(
+            entryStart: isoUTC.string(from: st.entry.startDate),
+            entryGrams: st.entry.quantity.doubleValue(for: gram),
+            observedGrams: a.observed.doubleValue(for: gram),
+            clampedGrams: a.clamped.doubleValue(for: gram),
+            totalGrams: a.total.doubleValue(for: gram),
+            remainingGrams: a.remaining.doubleValue(for: gram),
+            observedDateStart: isoUTC.string(from: a.observedDate.start),
+            observedDateEnd: isoUTC.string(from: a.observedDate.end),
+            estimatedTimeRemainingMinutes: a.estimatedTimeRemaining / 60.0,
+            timeToAbsorbObservedCarbsMinutes: a.timeToAbsorbObservedCarbs / 60.0,
+            observedTimelineCount: st.observedTimeline?.count ?? -1
+        )
+    }
+
+    emit(Fixture(
+        glucoseEffects: effects.map {
+            EffectOut(date: isoUTC.string(from: $0.startDate), value_mgdL: $0.quantity.doubleValue(for: mgdLUnit))
+        },
+        carbsOnBoard: cob.map {
+            CobOut(date: isoUTC.string(from: $0.startDate), grams: $0.value)
+        },
+        absorption: absorption
+    ))
+}
+
 // MARK: - Dispatch
 
 struct KindOnly: Decodable { let kind: String }
@@ -195,5 +356,6 @@ guard let kind = (try? JSONDecoder().decode(KindOnly.self, from: data))?.kind el
 switch kind {
 case "insulin_effect":        runInsulinEffect(data)
 case "dosing_recommendation": runDosingRecommendation(data)
+case "dynamic_carb_effect":   runDynamicCarbEffect(data)
 default:                      fail("unknown scenario kind: \(kind)")
 }

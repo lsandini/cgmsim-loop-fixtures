@@ -1,0 +1,207 @@
+{
+  "kind": "dynamic_carb_effect",
+  "_comment": "PRODUCTION dynamic carb path (map(to: ICE) -> dynamicGlucoseEffects/dynamicCarbsOnBoard). Two OVERLAPPING meals (multi-entry rate split), 3h ICE incl. one negative interval, absorption incomplete at ICE end (post-observation projection branch). Production params: PiecewiseLinear, overrun 1.5, delay 10, delta 5. CSF = 54/9 = 6 mg/dL per gram.",
+  "carbEntries": [
+    {
+      "start": "2026-03-02T10:00:00Z",
+      "grams": 60,
+      "absorptionTimeMinutes": 240
+    },
+    {
+      "start": "2026-03-02T10:45:00Z",
+      "grams": 25,
+      "absorptionTimeMinutes": 120
+    }
+  ],
+  "ice": [
+    {
+      "start": "2026-03-02T10:00:00Z",
+      "end": "2026-03-02T10:05:00Z",
+      "velocity_mgdL_per_min": 0.0
+    },
+    {
+      "start": "2026-03-02T10:05:00Z",
+      "end": "2026-03-02T10:10:00Z",
+      "velocity_mgdL_per_min": 0.0
+    },
+    {
+      "start": "2026-03-02T10:10:00Z",
+      "end": "2026-03-02T10:15:00Z",
+      "velocity_mgdL_per_min": 0.38
+    },
+    {
+      "start": "2026-03-02T10:15:00Z",
+      "end": "2026-03-02T10:20:00Z",
+      "velocity_mgdL_per_min": 0.63
+    },
+    {
+      "start": "2026-03-02T10:20:00Z",
+      "end": "2026-03-02T10:25:00Z",
+      "velocity_mgdL_per_min": 0.88
+    },
+    {
+      "start": "2026-03-02T10:25:00Z",
+      "end": "2026-03-02T10:30:00Z",
+      "velocity_mgdL_per_min": 1.13
+    },
+    {
+      "start": "2026-03-02T10:30:00Z",
+      "end": "2026-03-02T10:35:00Z",
+      "velocity_mgdL_per_min": 1.38
+    },
+    {
+      "start": "2026-03-02T10:35:00Z",
+      "end": "2026-03-02T10:40:00Z",
+      "velocity_mgdL_per_min": 1.63
+    },
+    {
+      "start": "2026-03-02T10:40:00Z",
+      "end": "2026-03-02T10:45:00Z",
+      "velocity_mgdL_per_min": 1.8
+    },
+    {
+      "start": "2026-03-02T10:45:00Z",
+      "end": "2026-03-02T10:50:00Z",
+      "velocity_mgdL_per_min": 1.95
+    },
+    {
+      "start": "2026-03-02T10:50:00Z",
+      "end": "2026-03-02T10:55:00Z",
+      "velocity_mgdL_per_min": 2.05
+    },
+    {
+      "start": "2026-03-02T10:55:00Z",
+      "end": "2026-03-02T11:00:00Z",
+      "velocity_mgdL_per_min": 2.13
+    },
+    {
+      "start": "2026-03-02T11:00:00Z",
+      "end": "2026-03-02T11:05:00Z",
+      "velocity_mgdL_per_min": -0.3
+    },
+    {
+      "start": "2026-03-02T11:05:00Z",
+      "end": "2026-03-02T11:10:00Z",
+      "velocity_mgdL_per_min": 0.75
+    },
+    {
+      "start": "2026-03-02T11:10:00Z",
+      "end": "2026-03-02T11:15:00Z",
+      "velocity_mgdL_per_min": 2.2
+    },
+    {
+      "start": "2026-03-02T11:15:00Z",
+      "end": "2026-03-02T11:20:00Z",
+      "velocity_mgdL_per_min": 2.3
+    },
+    {
+      "start": "2026-03-02T11:20:00Z",
+      "end": "2026-03-02T11:25:00Z",
+      "velocity_mgdL_per_min": 2.25
+    },
+    {
+      "start": "2026-03-02T11:25:00Z",
+      "end": "2026-03-02T11:30:00Z",
+      "velocity_mgdL_per_min": 2.15
+    },
+    {
+      "start": "2026-03-02T11:30:00Z",
+      "end": "2026-03-02T11:35:00Z",
+      "velocity_mgdL_per_min": 2.05
+    },
+    {
+      "start": "2026-03-02T11:35:00Z",
+      "end": "2026-03-02T11:40:00Z",
+      "velocity_mgdL_per_min": 1.95
+    },
+    {
+      "start": "2026-03-02T11:40:00Z",
+      "end": "2026-03-02T11:45:00Z",
+      "velocity_mgdL_per_min": 1.85
+    },
+    {
+      "start": "2026-03-02T11:45:00Z",
+      "end": "2026-03-02T11:50:00Z",
+      "velocity_mgdL_per_min": 1.75
+    },
+    {
+      "start": "2026-03-02T11:50:00Z",
+      "end": "2026-03-02T11:55:00Z",
+      "velocity_mgdL_per_min": 1.65
+    },
+    {
+      "start": "2026-03-02T11:55:00Z",
+      "end": "2026-03-02T12:00:00Z",
+      "velocity_mgdL_per_min": 1.55
+    },
+    {
+      "start": "2026-03-02T12:00:00Z",
+      "end": "2026-03-02T12:05:00Z",
+      "velocity_mgdL_per_min": 1.38
+    },
+    {
+      "start": "2026-03-02T12:05:00Z",
+      "end": "2026-03-02T12:10:00Z",
+      "velocity_mgdL_per_min": 1.25
+    },
+    {
+      "start": "2026-03-02T12:10:00Z",
+      "end": "2026-03-02T12:15:00Z",
+      "velocity_mgdL_per_min": 1.15
+    },
+    {
+      "start": "2026-03-02T12:15:00Z",
+      "end": "2026-03-02T12:20:00Z",
+      "velocity_mgdL_per_min": 1.05
+    },
+    {
+      "start": "2026-03-02T12:20:00Z",
+      "end": "2026-03-02T12:25:00Z",
+      "velocity_mgdL_per_min": 0.95
+    },
+    {
+      "start": "2026-03-02T12:25:00Z",
+      "end": "2026-03-02T12:30:00Z",
+      "velocity_mgdL_per_min": 0.85
+    },
+    {
+      "start": "2026-03-02T12:30:00Z",
+      "end": "2026-03-02T12:35:00Z",
+      "velocity_mgdL_per_min": 0.75
+    },
+    {
+      "start": "2026-03-02T12:35:00Z",
+      "end": "2026-03-02T12:40:00Z",
+      "velocity_mgdL_per_min": 0.68
+    },
+    {
+      "start": "2026-03-02T12:40:00Z",
+      "end": "2026-03-02T12:45:00Z",
+      "velocity_mgdL_per_min": 0.6
+    },
+    {
+      "start": "2026-03-02T12:45:00Z",
+      "end": "2026-03-02T12:50:00Z",
+      "velocity_mgdL_per_min": 0.53
+    },
+    {
+      "start": "2026-03-02T12:50:00Z",
+      "end": "2026-03-02T12:55:00Z",
+      "velocity_mgdL_per_min": 0.45
+    },
+    {
+      "start": "2026-03-02T12:55:00Z",
+      "end": "2026-03-02T13:00:00Z",
+      "velocity_mgdL_per_min": 0.38
+    }
+  ],
+  "carbRatio_gPerU": 9.0,
+  "insulinSensitivity_mgdLperU": 54.0,
+  "absorptionTimeOverrun": 1.5,
+  "initialAbsorptionTimeOverrun": 1.5,
+  "defaultAbsorptionTimeMinutes": 180,
+  "delayMinutes": 10,
+  "deltaMinutes": 5,
+  "effectFrom": "2026-03-02T10:00:00Z",
+  "effectToHoursAfter": 8
+}
