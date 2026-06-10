@@ -78,6 +78,29 @@ struct SimpleGlucose: GlucoseValue {
     let quantity: HKQuantity
 }
 
+/// Faithful port of LoopKit `InsulinMath.reconciled()` (bolus + tempBasal path).
+/// `reconciled()` is `internal` so it can't be called from this module; real Loop
+/// runs it in DoseStore BEFORE the algorithm, truncating each temp basal to end at
+/// the next temp's start (the actual delivered insulin). CGMSIM has no suspend/
+/// resume events, so only the temp/bolus branches matter. Boluses pass through.
+func reconcileTempBasals(_ doses: [DoseEntry]) -> [DoseEntry] {
+    let temps = doses.filter { $0.type == .tempBasal }.sorted { $0.startDate < $1.startDate }
+    guard temps.count > 1 else { return doses }
+    let others = doses.filter { $0.type != .tempBasal }
+
+    var reconciled: [DoseEntry] = []
+    for (i, cur) in temps.enumerated() {
+        // Swift reconciled(): trim `last` to min(last.endDate, nextDose.startDate).
+        let end = (i + 1 < temps.count) ? min(cur.endDate, temps[i + 1].startDate) : cur.endDate
+        if end > cur.startDate {   // drop 0-duration after truncation (Swift's guard)
+            reconciled.append(DoseEntry(
+                type: .tempBasal, startDate: cur.startDate, endDate: end,
+                value: cur.value, unit: cur.unit, insulinType: cur.insulinType))
+        }
+    }
+    return others + reconciled
+}
+
 // MARK: - kind: insulin_effect
 
 func runInsulinEffect(_ data: Data) {
@@ -378,6 +401,15 @@ func runLoopPrediction(_ data: Data) {
         }
     }
 
+    // Reconcile overlapping temp basals (truncate each at the next temp's start),
+    // matching what real Loop does in DoseStore.reconciled() BEFORE the algorithm
+    // runs. LoopKit's `reconciled()` is `internal`, so it can't be called from this
+    // module; this is a faithful port of its bolus + tempBasal path (CGMSIM has no
+    // suspend/resume events). Without this, generatePrediction would see the raw
+    // overlapping temps — which real Loop never feeds it. The JS port reconciles
+    // identically in calculateInsulinEffect (§T1).
+    let reconciledDoses = reconcileTempBasals(doses)
+
     // Carb entries → StoredCarbEntry.
     let gram = HKUnit.gram()
     let carbEntries: [StoredCarbEntry] = s.carbEntries.map { c in
@@ -408,7 +440,7 @@ func runLoopPrediction(_ data: Data) {
 
     let input = LoopPredictionInput(
         glucoseHistory: glucoseHistory,
-        doses: doses,
+        doses: reconciledDoses,
         carbEntries: carbEntries,
         settings: settings
     )
