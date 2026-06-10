@@ -1,5 +1,5 @@
 #!/bin/bash
 
 git add .
-git commit -m "predict_glucose"
+git commit -m "capstone test"
 git push -u origin main
